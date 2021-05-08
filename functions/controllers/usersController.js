@@ -42,7 +42,7 @@ usersController.updateUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
     const documentToUpdate = db.collection("users").doc(req.params.id);
-    await documentToUpdate.update({ name, email, password });
+    await documentToUpdate.update({ name, email, password: md5(password) });
     res.status(200).send({ msg: "User updated" });
   } catch (err) {
     res.status(400).send({ msg: err });
