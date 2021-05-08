@@ -51,10 +51,40 @@ usersController.updateUser = async (req, res) => {
 
 // Delete a user
 usersController.deleteUser = async (req, res) => {
+  const user = db.collection("users").doc(req.params.id).collection("points");
+  const QuerySnapshot = await user.get();
+  const docsInSubcollection = QuerySnapshot.docs.map((doc) => {
+    return {
+      id: doc.id,
+    };
+  });
+
+  /*
+    If the user has varios documents in "points" subcollections, this documents will be deleted, and after the user.
+    If not, only the user will be deleted
+  */
   try {
-    const documentToDelete = db.collection("users").doc(req.params.id);
-    await documentToDelete.delete();
-    res.status(200).send({ msg: "User deleted" });
+    if (docsInSubcollection.length > 0) {
+      async function deleteDocsInSubcollection() {
+        for (let i = 0; i < docsInSubcollection.length; i++) {
+          let subDocumentToDelete = db
+            .collection("users")
+            .doc(req.params.id)
+            .collection("points")
+            .doc(docsInSubcollection[i].id);
+          await subDocumentToDelete.delete();
+        }
+      }
+      deleteDocsInSubcollection();
+
+      const documentToDelete = db.collection("users").doc(req.params.id);
+      await documentToDelete.delete();
+      res.status(200).send({ msg: "User deleted with nested documents" });
+    } else {
+      const documentToDelete = db.collection("users").doc(req.params.id);
+      await documentToDelete.delete();
+      res.status(200).send({ msg: "User deleted" });
+    }
   } catch (err) {
     res.status(400).send({ msg: err });
   }

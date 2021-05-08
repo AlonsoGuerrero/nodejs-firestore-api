@@ -13,5 +13,8 @@ const app = express();
 app.use(cors());
 app.use("/users", usersRoutes);
 app.use("/points", pointsRoutes);
+app.all('*', (req, res) => {
+  res.status(404).send('Sorry, check your URL...')
+});
 
 exports.app = functions.https.onRequest(app);
